@@ -20,6 +20,13 @@ dependencies {
     implementation("io.quarkus:quarkus-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("io.quarkus:quarkus-arc")
+
+    implementation("net.bis5.mattermost4j:mattermost4j-core:0.25.0")
+    implementation("jakarta.inject:jakarta.inject-api:2.0.1")
+    implementation("jakarta.activation:jakarta.activation-api:2.1.0")
+
+
+
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
 }
