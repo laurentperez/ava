@@ -10,7 +10,7 @@ import javax.ws.rs.Path
 // @RegisterClientHeaders(RequestUUIDHeaderFactory::class)
 // @ClientHeaderParam(name = "x-testing", value = "java")
 // @ClientHeaderParam(name = "Authorization", value = ["{com.itk.ia.client.OpenAI.getAuthorizationHeader}"])
-@RegisterClientHeaders(RequestUUIDHeaderFactory::class)
+@RegisterClientHeaders(OpenAIHeadersFactory::class)
 interface OpenAIService {
 
     @GET

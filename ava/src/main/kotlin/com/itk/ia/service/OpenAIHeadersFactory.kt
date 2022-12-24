@@ -8,7 +8,7 @@ import javax.ws.rs.core.MultivaluedHashMap
 import javax.ws.rs.core.MultivaluedMap
 
 @ApplicationScoped
-class RequestUUIDHeaderFactory : ClientHeadersFactory {
+class OpenAIHeadersFactory : ClientHeadersFactory {
 
     @Inject
     @ConfigProperty(name = "client.openai.secret-key")
