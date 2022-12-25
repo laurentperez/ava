@@ -1,6 +1,6 @@
 package com.itk.ia.client
 
-import javax.enterprise.context.ApplicationScoped
+import jakarta.enterprise.context.ApplicationScoped
 
 @ApplicationScoped
 class OpenAI {
