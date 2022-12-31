@@ -31,13 +31,11 @@ dependencies {
     //implementation("jakarta.inject:jakarta.inject-api:2.0.1")
     //implementation("jakarta.activation:jakarta.activation-api:2.1.0")
 
-
-
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
 }
 
-group = "org.acme"
+group = "fr.ava"
 version = "1.0.0-SNAPSHOT"
 
 java {
@@ -45,9 +43,9 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-tasks.withType<Test> {
-    systemProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager")
-}
+//tasks.withType<Test> {
+//    systemProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager")
+//}
 allOpen {
     annotation("jakarta.ws.rs.Path")
     annotation("jakarta.enterprise.context.ApplicationScoped")

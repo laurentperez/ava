@@ -1,4 +1,4 @@
-package com.itk.ia.service
+package fr.ava.ia.service
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders
