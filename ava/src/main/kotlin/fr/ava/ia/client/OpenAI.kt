@@ -1,4 +1,4 @@
-package com.itk.ia.client
+package fr.ava.ia.client
 
 import jakarta.enterprise.context.ApplicationScoped
 

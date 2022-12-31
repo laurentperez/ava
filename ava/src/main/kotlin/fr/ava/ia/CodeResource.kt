@@ -1,6 +1,6 @@
-package com.itk.ia
+package fr.ava.ia
 
-import com.itk.ia.service.OpenAIService
+import fr.ava.ia.service.OpenAIService
 import org.eclipse.microprofile.rest.client.inject.RestClient
 import jakarta.inject.Inject
 import jakarta.ws.rs.GET

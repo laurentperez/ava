@@ -1,4 +1,4 @@
-package com.itk.ia.service
+package fr.ava.ia.service
 
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.eclipse.microprofile.rest.client.ext.ClientHeadersFactory

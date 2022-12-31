@@ -1,6 +1,6 @@
-package com.itk.ia
+package fr.ava.ia
 
-import com.itk.ia.service.MattermostService
+import fr.ava.ia.service.MattermostService
 import jakarta.inject.Inject
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.Path
@@ -15,7 +15,6 @@ class MatterResource {
 
     @GET
     fun hello(): String {
-        mattermostService.init();
         return mattermostService.toString()
     }
 }
