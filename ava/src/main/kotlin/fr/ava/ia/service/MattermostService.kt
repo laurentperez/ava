@@ -10,6 +10,7 @@ import net.bis5.mattermost.model.IncomingWebhookRequest
 import net.bis5.mattermost.model.Post
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.glassfish.jersey.logging.LoggingFeature
+import java.lang.Thread.sleep
 import java.util.function.Consumer
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -36,17 +37,18 @@ class MattermostService(
         println("boo**********matter")
         val client = MattermostClient.builder()
             .url(serverUrl)
-            .httpConfig(Consumer<ClientBuilder?> { it.register(
-                LoggingFeature(logger, Level.ALL,
-                    LoggingFeature.Verbosity.PAYLOAD_ANY, 100000)) }
-            )
+//            .httpConfig(Consumer<ClientBuilder?> { it.register(
+//                LoggingFeature(logger, Level.ALL,
+//                    LoggingFeature.Verbosity.PAYLOAD_ANY, 100000)) }
+//            )
 //            .httpConfig(
 //                b -> b.register(new LoggingFeature(Logger.getLogger(MattermostClient.class.getName()), Level.INFO,
 //                        LoggingFeature.Verbosity.PAYLOAD_ANY, 100000)))
             .logLevel(Level.ALL)
-            //.ignoreUnknownProperties()
+            .ignoreUnknownProperties()
             .build()
             client.login(login, password)
+        logger.warning("yyyyyyyyyyyyyyyyyyyyyyyy")
 
 //        val iclient = IncomingWebhookClient(serverUrl)
 //        val payload = IncomingWebhookRequest()
@@ -78,9 +80,34 @@ class MattermostService(
         val channelsForTeamRoute = client.getChannelsForTeamRoute(tid)
         val channelByName = client.getChannelByName("town-square", tid).readEntity()
         post.channelId = channelByName.id
-        post.message = "message_" + System.currentTimeMillis()
+        post.message = "Hello, ts : " + System.currentTimeMillis()
+        post.isPinned = true
         // client.createPost()
-        client.createPost(post)
+        val r = client.createPost(post).readEntity()
+        val pid = r.id
+        sleep(30_000)
+
+        val plist = client.getPostThread(pid, null).readEntity()
+        logger.info("" + plist)
+
+
+        // TODO : get requests from the thread,
+        //  identify each user & demand
+        // perform then reply in direct channel
+
+        // OR : get my dms and mentions, then reply in dm
+        // remember direct channel is between 2 users (id the couples, id the channels)
+        // https://api.mattermost.com/#tag/channels/operation/CreateDirectChannel
+        // my channels : https://api.mattermost.com/#tag/channels/operation/GetChannelsForTeamForUser
+        // (just like users do)
+
+//        val direct = client.createDirectChannel("", "")
+//        val directid = direct.readEntity().id
+
+        // when it logs post offline : Get the total unread messages and mentions for a channel for a user.
+
+
+
     }
 
 

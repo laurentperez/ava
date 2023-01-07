@@ -30,6 +30,9 @@ dependencies {
     implementation("net.bis5.mattermost4j:mattermost4j-core:0.25.0")
     //implementation("jakarta.inject:jakarta.inject-api:2.0.1")
     //implementation("jakarta.activation:jakarta.activation-api:2.1.0")
+//    implementation("org.jboss.slf4j:slf4j-jboss-logmanager")
+//    implementation("org.slf4j:jul-to-slf4j")
+    implementation("org.glassfish.jersey.connectors:jersey-apache-connector:3.0.4")
 
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
@@ -43,9 +46,9 @@ java {
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-//tasks.withType<Test> {
-//    systemProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager")
-//}
+tasks.withType<Test> {
+    systemProperty("java.util.logging.manager", "org.jboss.logmanager.LogManager")
+}
 allOpen {
     annotation("jakarta.ws.rs.Path")
     annotation("jakarta.enterprise.context.ApplicationScoped")
