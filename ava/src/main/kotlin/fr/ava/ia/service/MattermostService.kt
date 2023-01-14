@@ -3,15 +3,13 @@ package fr.ava.ia.service
 import io.quarkus.runtime.StartupEvent
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.event.Observes
-import jakarta.ws.rs.client.ClientBuilder
+import jakarta.inject.Inject
 import net.bis5.mattermost.client4.MattermostClient
-import net.bis5.mattermost.client4.hook.IncomingWebhookClient
-import net.bis5.mattermost.model.IncomingWebhookRequest
+import net.bis5.mattermost.model.ChannelType
 import net.bis5.mattermost.model.Post
 import org.eclipse.microprofile.config.inject.ConfigProperty
+import org.eclipse.microprofile.rest.client.inject.RestClient
 import java.lang.Thread.sleep
-import java.util.function.Consumer
-import java.util.logging.Level
 import java.util.logging.Logger
 
 
@@ -22,7 +20,9 @@ class MattermostService(
     @ConfigProperty(name = "bot.chat.login")
     private val login : String,
     @ConfigProperty(name = "bot.chat.password")
-    private val password : String
+    private val password : String,
+    @RestClient
+    private var openAIService: OpenAIService
 ) {
 
     var logger = Logger.getLogger(this::class.java.name)
@@ -69,26 +69,59 @@ class MattermostService(
         // client.setAccessToken(token);
         // client.getChannelsForTeamRoute("test")
 
-        val post = Post()
         // client.getChannelsForTeamRoute("test")
         // val email = client.getUser("ava@ava.foo").readEntity().email
         // val channelList = client.getChannelsForTeamForUser("test", "ava@ava.foo").readEntity()
 //        val r = client.getTeamByNameRoute("test")
-        val t = client.getTeamByName("test").readEntity()
-        val tid = t.id
-        val channelsForTeamRoute = client.getChannelsForTeamRoute(tid)
-        val channelByName = client.getChannelByName("town-square", tid).readEntity()
+//        val channelsForTeamRoute = client.getChannelsForTeamRoute(tid)
+        // init, post to town square
+        val team = client.getTeamByName("test").readEntity()
+        val teamid = team.id
+        val channelByName = client.getChannelByName("town-square", teamid).readEntity()
+        val post = Post()
         post.channelId = channelByName.id
         post.message = "Hello, ts : " + System.currentTimeMillis()
-        post.isPinned = true
-        // client.createPost()
+//        post.isPinned = true
         val r = client.createPost(post).readEntity()
+        val userId = r.userId
         val pid = r.id
-        sleep(30_000)
+//        sleep(30_000)
 
-        val plist = client.getPostThread(pid, null).readEntity()
-        logger.info("" + plist)
+//        val plist = client.getPostThread(pid, null).readEntity()
+//        logger.info("" + plist)
 
+        // TODO loop schedule this poller
+        val mychannels = client.getChannelsForTeamForUser(teamid, userId).readEntity()
+        mychannels.forEach { c ->
+            run {
+                if (c.type == ChannelType.Direct) {
+                    logger.info("found direct channel $c")
+//                    val dchan = client.getChannel(c.id).readEntity()
+                    val post = Post(c.id, "(dm)")
+                    val rdm = client.createPost(post).readEntity()
+                    val dusers = client.getUsersInChannel(c.id).readEntity()
+                    dusers.forEach { user ->
+                        run {
+                            if (user.id != userId) {
+                                logger.info("partner: $user, ${user.username}")
+                            }
+                        }
+                    }
+                    sleep(30_000)
+                    val dposts = client.getPostsAfter(c.id, rdm.id).readEntity()
+                    dposts.posts.forEach { (t, dpost) ->
+                            logger.info(t)
+                            // post.userId
+                            logger.info(dpost.message)
+                            val m = openAIService.getModels().toString()
+                            client.createPost(Post(c.id, m)).readEntity()
+                    }
+//                    println(dposts)
+                }
+            }
+        }
+        println(mychannels)
+        // client.getChannelsForTeamForUser(tid, "")
 
         // TODO : get requests from the thread,
         //  identify each user & demand
@@ -103,9 +136,8 @@ class MattermostService(
 //        val direct = client.createDirectChannel("", "")
 //        val directid = direct.readEntity().id
 
-        // when it logs post offline : Get the total unread messages and mentions for a channel for a user.
-
-
+        // when it logs post offline :
+        // Get the total unread messages and mentions for a channel for a user.
 
     }
 
