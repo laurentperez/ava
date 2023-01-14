@@ -9,7 +9,6 @@ import net.bis5.mattermost.client4.hook.IncomingWebhookClient
 import net.bis5.mattermost.model.IncomingWebhookRequest
 import net.bis5.mattermost.model.Post
 import org.eclipse.microprofile.config.inject.ConfigProperty
-import org.glassfish.jersey.logging.LoggingFeature
 import java.lang.Thread.sleep
 import java.util.function.Consumer
 import java.util.logging.Level
@@ -44,7 +43,7 @@ class MattermostService(
 //            .httpConfig(
 //                b -> b.register(new LoggingFeature(Logger.getLogger(MattermostClient.class.getName()), Level.INFO,
 //                        LoggingFeature.Verbosity.PAYLOAD_ANY, 100000)))
-            .logLevel(Level.ALL)
+            // .logLevel(Level.ALL)
             .ignoreUnknownProperties()
             .build()
             client.login(login, password)

@@ -27,12 +27,15 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("io.quarkus:quarkus-arc")
 
-    implementation("net.bis5.mattermost4j:mattermost4j-core:0.25.0")
+//    implementation("net.bis5.mattermost4j:mattermost4j-core:0.25.0")
+    implementation("net.bis5.mattermost4j:mattermost4j-core:1.0.0-beta.1")
+    implementation("net.bis5.mattermost4j:mattermost4j-resteasy:1.0.0-beta.1")
+
     //implementation("jakarta.inject:jakarta.inject-api:2.0.1")
     //implementation("jakarta.activation:jakarta.activation-api:2.1.0")
 //    implementation("org.jboss.slf4j:slf4j-jboss-logmanager")
 //    implementation("org.slf4j:jul-to-slf4j")
-    implementation("org.glassfish.jersey.connectors:jersey-apache-connector:3.0.4")
+    // implementation("org.glassfish.jersey.connectors:jersey-apache-connector:3.0.4")
 
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
