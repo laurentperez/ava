@@ -13,7 +13,7 @@ services:
       MYSQL_DATABASE: mattermost_test
 
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     ports:
       - 5432:5432
     networks:
@@ -28,6 +28,8 @@ services:
     image: "mattermost/mattermost-team-edition:${MATTERMOST_VERSION:-5.23.0}"
     ports:
       - "8065:8065"
+    depends_on:
+      - mysql
     networks:
       - mattermost
     environment:
@@ -46,7 +48,11 @@ services:
       MM_SERVICESETTINGS_SITEURL: "http://localhost:8065"
 
   inbucket:
-    image: inbucket/inbucket:3.0.0
+    image: inbucket/inbucket
+    ports:
+      - "9000:9000"
+      - "2500:2500"
+      - "1100:1100"
     networks:
       - mattermost
 
