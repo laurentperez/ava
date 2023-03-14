@@ -1,4 +1,4 @@
-package fr.ava.ia.service
+package fr.ava.ia.service.ai
 
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.eclipse.microprofile.rest.client.ext.ClientHeadersFactory

@@ -1,4 +1,4 @@
-package fr.ava.ia.service
+package fr.ava.ia.service.ai
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders

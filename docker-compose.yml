@@ -12,6 +12,18 @@ services:
       MYSQL_USER: mmuser
       MYSQL_DATABASE: mattermost_test
 
+  postgres:
+    image: postgres:15
+    ports:
+      - 5432:5432
+    networks:
+      - mattermost
+    environment:
+      POSTGRES_DB: avadb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+
   server:
     image: "mattermost/mattermost-team-edition:${MATTERMOST_VERSION:-5.23.0}"
     ports:

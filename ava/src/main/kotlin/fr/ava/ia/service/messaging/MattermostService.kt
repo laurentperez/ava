@@ -1,9 +1,9 @@
-package fr.ava.ia.service
+package fr.ava.ia.service.messaging
 
+import fr.ava.ia.service.ai.OpenAIService
 import io.quarkus.runtime.StartupEvent
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.event.Observes
-import jakarta.inject.Inject
 import net.bis5.mattermost.client4.MattermostClient
 import net.bis5.mattermost.model.ChannelType
 import net.bis5.mattermost.model.Post
@@ -28,7 +28,7 @@ class MattermostService(
     var logger = Logger.getLogger(this::class.java.name)
 
     fun onStart(@Observes ev: StartupEvent?) {
-        init()
+        // init()
     }
 
     fun init() {
