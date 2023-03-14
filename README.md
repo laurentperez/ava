@@ -21,12 +21,14 @@ Please read :
 # Quickstart
 
 1. install JDK17 and gradle from https://sdkman.io/
-2. start the on-premise Mattermost chat server `docker-compose up`
-3. navigate to its http://localhost:8065 and create a team named "test" and an account for the Ava bot (hint: yo do not need a valid email address, copy the "Invite" link or use the dockerized inbucket email server to get the invitation)
-4. you can reconfigure these credentials in `application.properties` or `application.yml`
-5. optional : env export your `CLIENT_OPENAI_SECRET_KEY` if you'd like to use the OpenAI/Codex cloud models. Make sure you understand and cap your billing charges.
-6. run Ava : `gradle quarkusDev` or `gradle bootRun`
-7. the bot shall join the default chatroom "Town Square" and greet you ; if it does not, check the logs
+2. start the on-premise Mattermost chat server `docker compose up`
+3. navigate to its http://localhost:8065, create yourself an account
+4. create a team named `test` and an account `ava@ava.co` for the Ava bot (hint: use "Invite people", copy the "Invite" invitation link in another browser window to create the bot account)  
+5. you can reconfigure the bot credentials in `application.properties` or `application.yml`
+6. optional : env export your `CLIENT_OPENAI_SECRET_KEY` if you'd like to use the OpenAI/Codex cloud models. Make sure you understand and cap your billing charges.
+7. run Ava : `gradle quarkusDev` or `gradle bootRun`
+8. the bot shall join the default chatroom "Town Square" and greet you : if it does not, check the server logs
+9. open a Direct message with the bot, and chat with it.
 
 # Usage
 
