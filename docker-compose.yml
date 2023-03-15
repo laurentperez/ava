@@ -2,7 +2,7 @@ version: "3"
 
 services:
   mysql:
-    image: mysql:5.7
+    image: mariadb:10.7
     networks:
       - mattermost
     environment:
@@ -13,9 +13,9 @@ services:
       MYSQL_DATABASE: mattermost_test
 
   postgres:
-    image: postgres:15-alpine
+    image: postgres:14-alpine
     ports:
-      - 5432:5432
+      - "5432:5432"
     networks:
       - mattermost
     environment:
@@ -23,9 +23,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
 
-
-  server:
-    image: "mattermost/mattermost-team-edition:${MATTERMOST_VERSION:-5.23.0}"
+  mattermost:
+    image: "mattermost/mattermost-team-edition:${MATTERMOST_VERSION:-5.39.3}"
     ports:
       - "8065:8065"
     depends_on:
@@ -37,7 +36,7 @@ services:
       MM_PASSWORD: mostest
       MM_DBNAME: mattermost_test
       MM_SQLSETTINGS_DRIVERNAME: mysql
-      MM_SQLSETTINGS_DATASOURCE: "mmuser:mostest@tcp(mysql)/mattermost_test?charset=utf8mb4,utf8&readTimeout=30s&writeTimeout=30s"
+      MM_SQLSETTINGS_DATASOURCE: "mmuser:mostest@tcp(mysql)/mattermost_test"
       MM_EMAILSETTINGS_SENDEMAILNOTIFICATION: "true"
       MM_EMAILSETTINGS_FEEDBACKEMAIL: "feedback@localhost"
       MM_EMAILSETTINGS_SMTPPORT: "2500"
