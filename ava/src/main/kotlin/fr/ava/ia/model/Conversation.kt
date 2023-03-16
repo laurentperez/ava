@@ -5,6 +5,9 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Temporal
+import jakarta.persistence.TemporalType
+import java.util.*
 
 @Entity
 class Conversation (
@@ -14,9 +17,30 @@ class Conversation (
     @Column(nullable = false)
     val userID : String,
 
+    @Column(nullable = false)
+    val postId : String,
+
+    @Column(nullable = false)
+    val rootId : String,
+
+    @Column(nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    val createdAt : Date,
+
+    @Column(nullable = false)
+    val message : String,
+
+    @Column(nullable = false)
+    val actor : Actor,
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)
     var id: Long? = null
 
 )
+
+enum class Actor {
+    USER, ASSISTANT
+}
+
