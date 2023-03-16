@@ -10,7 +10,7 @@ import java.time.Instant
 
 @RegisterRestClient(configKey = "oai-api")
 // @ClientHeaderParam(name = "x-testing", value = "java")
-// @ClientHeaderParam(name = "Authorization", value = ["{com.itk.ia.client.OpenAI.getAuthorizationHeader}"])
+// @ClientHeaderParam(name = "Authorization", value = ["{xxxxxxx.ia.client.OpenAI.getAuthorizationHeader}"])
 @RegisterClientHeaders(OpenAIHeadersFactory::class)
 interface OpenAIService {
 
@@ -44,8 +44,12 @@ interface OpenAIService {
         val temperature : Double = 1.0,
         val n : Int = 1,
         val max_tokens : Int = 512,
-        val user: String = ChatRequest::class.java.simpleName
+        val user: String = ChatRequest::class.java.simpleName + model + "jdk"
+        // echo to echo back the prompt
     )
+
+
+
 
     data class ChatMessage(
         val role : String, // system, user, assistant
@@ -65,7 +69,7 @@ interface OpenAIService {
         val model : String = "code-davinci-002", // codex. or code-cushman-001.
         val prompt : String,
         val temperature : Double = 0.0, // lower means focused deterministic, higher more random
-        val n : Int = 2,
+        val n : Int = 1,
         val max_tokens : Int = 512,
         val user: String = CompletionRequest::class.java.simpleName
     )

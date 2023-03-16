@@ -10,11 +10,11 @@ import org.eclipse.microprofile.config.inject.ConfigProperty
 @ApplicationScoped
 @Priority(999)
 class MattermostClientHelper(
-    @ConfigProperty(name = "bot.chat.team")
+    @ConfigProperty(name = "bot.mmost.team")
     private val team : String,
-    @ConfigProperty(name = "bot.chat.home")
+    @ConfigProperty(name = "bot.mmost.home")
     private val home : String,
-    @ConfigProperty(name = "bot.chat.login")
+    @ConfigProperty(name = "bot.mmost.login")
     private val login : String,
     private val mmClient : MattermostClient
 ) {

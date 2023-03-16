@@ -36,6 +36,9 @@ class Conversation (
     @Column(nullable = false)
     val actor: Actor,
 
+    @Column(nullable = false)
+    val isActive: Boolean = true,
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "id", nullable = false)

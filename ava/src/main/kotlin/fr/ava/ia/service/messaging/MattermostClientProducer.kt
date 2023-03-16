@@ -7,11 +7,11 @@ import org.eclipse.microprofile.config.inject.ConfigProperty
 
 @ApplicationScoped
 class MattermostClientProducer(
-    @ConfigProperty(name = "bot.chat.serverUrl")
+    @ConfigProperty(name = "bot.mmost.serverUrl")
     private val serverUrl : String,
-    @ConfigProperty(name = "bot.chat.login")
+    @ConfigProperty(name = "bot.mmost.login")
     private val login : String,
-    @ConfigProperty(name = "bot.chat.password")
+    @ConfigProperty(name = "bot.mmost.password")
     private val password : String,
 ) {
 

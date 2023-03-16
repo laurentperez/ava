@@ -9,8 +9,8 @@ import jakarta.ws.rs.Path
 import java.time.Instant
 import java.util.*
 
-@Path("/oai/jdbc")
-class ConversationResource {
+@Path("/admin")
+class AdminResource {
 
     @Inject
     private lateinit var dbService: DbService

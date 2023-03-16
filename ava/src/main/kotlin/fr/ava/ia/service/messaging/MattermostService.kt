@@ -4,6 +4,7 @@ import fr.ava.ia.model.Actor
 import fr.ava.ia.model.Conversation
 import fr.ava.ia.service.oai.OpenAIService
 import fr.ava.ia.service.db.DbService
+import fr.ava.ia.service.oai.OpenAIHelper.Companion.ASSISTANT_PYTHON_CONSISE
 import io.quarkus.runtime.StartupEvent
 import io.quarkus.scheduler.Scheduler
 import jakarta.annotation.Priority
@@ -13,11 +14,11 @@ import net.bis5.mattermost.client4.MattermostClient
 import net.bis5.mattermost.model.ChannelType
 import net.bis5.mattermost.model.Post
 import org.eclipse.microprofile.rest.client.inject.RestClient
+import org.jboss.logging.Logger
 import java.lang.Thread.sleep
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.*
-import java.util.logging.Logger
 
 
 @ApplicationScoped
@@ -39,8 +40,6 @@ class MattermostService(
     fun onStart(@Observes ev: StartupEvent?) {
         // CDI ARC reference https://marcelkliemannel.com/articles/2021/migrating-from-spring-to-quarkus/#the-container
 
-//        sleep(6_000)
-
         _client = mattermostClientHelper.getClient()
         _teamId = mattermostClientHelper.getTeamId()
         _botUserId = mattermostClientHelper.getUserId()
@@ -56,7 +55,7 @@ class MattermostService(
 
         println("ready, my id is $_botUserId........................................")
 
-        // TODO quartz : job can lookup
+        // TODO quartz : job can lookup or receive datamap
 
 //        doPoll()
     }
@@ -117,7 +116,6 @@ class MattermostService(
             mychannels.forEach loopingchannels@ { chann ->
             if (chann.type == ChannelType.Direct) {
                 logger.info("found direct channel $chann")
-//                    val dchan = client.getChannel(chann.id).readEntity()
                 val channelId = chann.id
                 val dmUsers = _client.getUsersInChannel(channelId).readEntity() // must be 2
                 dmUsers.forEach { user ->
@@ -133,7 +131,7 @@ class MattermostService(
                             }
                         }
                     }
-                }
+                } // eof dmUsers welcoming exchange
                 // after hello
                 logger.info("polling for new posts after lastExchange ${lastExchange!!.id}...............")
                 val dposts = _client.getPostsAfter(channelId, lastExchange!!.id).readEntity()
@@ -146,20 +144,20 @@ class MattermostService(
                 logger.info("found ${order.size} post(s) after lastExchange ${lastExchange!!.id} : $order")
                 dposts.posts.forEach loopingposts@{ (postId, post) ->
                     val poster = post.userId
-                    // TODO à cause de update_at, le hello de départ revient > getPostsAfter ?
+                    // TODO à cause de update_at, le hello de départ revient > getPostsAfter
                     // /!\ le prev_post_id est le hello et le root/parent
                     // /!\ "order" a BIEN les réponses de thread et PAS l'id racine en order
                     when {
                         poster == _botUserId -> {
-                            // this is the conversation "hello" starter
+                            // this is the conversational "hello" starter
                             // this is returned because update_at is updated (?)
-                            logger.warning("\uD83E\uDD16 ignoring lastExchange from bot........ for $post")
+                            logger.warn("\uD83E\uDD16 ignoring lastExchange from bot........ for $post")
                             return@loopingposts
                         }
                         (post.rootId == "") && (post.parentId == "") -> {
                             // this is not a conversation. TODO handle ?
                             // ours has replyCount, handle ?
-                            logger.warning("\uD83E\uDD16 lastExchange not a thread ! $post")
+                            logger.warn("\uD83E\uDD16 ignoring lastExchange is not a thread ! $post")
                             return@loopingposts
                         }
                         (post.rootId != "") && (post.parentId != "") -> {
@@ -174,7 +172,22 @@ class MattermostService(
                                         post.rootId, Date.from(Instant.ofEpochMilli(post.createAt)), post.message, Actor.USER)
                                     dbService.saveConversation(request)
                                     // respond
-                                    val reply = _client.createPost(Post(channelId, "bonk")).readEntity()
+                                    val cRequest = OpenAIService.ChatRequest(
+                                        messages = listOf(
+                                            OpenAIService.ChatMessage("system", ASSISTANT_PYTHON_CONSISE),
+                                            OpenAIService.ChatMessage("user", "using python, ${post.message}")
+                                        )
+                                        // todo on subsequent calls, drop "using"
+                                    )
+                                    val reply : Post = try {
+                                        val cResp = openAIService.getChatCompletions(cRequest).choices[0]
+                                        val message = cResp.message.content
+                                        // val role = message.role // ?
+                                        _client.createPost(Post(channelId, message)).readEntity()
+                                    } catch (e: Exception) {
+                                        logger.error("oops, failed to use OpenAI", e)
+                                        _client.createPost(Post(channelId, "oops, error! ${e.message}")).readEntity()
+                                    }
                                     val response = Conversation(reply.userId, reply.id, postId,
                                         reply.rootId, Date.from(Instant.ofEpochMilli(reply.createAt)), reply.message, Actor.ASSISTANT)
                                     dbService.saveConversation(response)
@@ -186,14 +199,9 @@ class MattermostService(
                         }
                     }
                     logger.info(post.message)
-                    // val m = openAIService.getModels().toString()
-                    // _client.createPost(Post(chann.id, m)).readEntity()
-
                 }
-
-//                    println(dposts)
             } else {
-                logger.warning("UNEXPECTED channel type ${chann.type} : ${chann.name}")
+                    logger.warn("UNEXPECTED channel type ${chann.type} : ${chann.name}")
                 }
             }
             // partners are updated, posts updated
