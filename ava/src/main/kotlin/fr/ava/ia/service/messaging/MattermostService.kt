@@ -21,7 +21,7 @@ import java.util.logging.Logger
 
 
 @ApplicationScoped
-@Priority(199)
+@Priority(1)
 class MattermostService(
     private val dbService: DbService,
     private val mattermostClientHelper: MattermostClientHelper,
@@ -39,6 +39,8 @@ class MattermostService(
     fun onStart(@Observes ev: StartupEvent?) {
         // CDI ARC reference https://marcelkliemannel.com/articles/2021/migrating-from-spring-to-quarkus/#the-container
 
+//        sleep(6_000)
+
         _client = mattermostClientHelper.getClient()
         _teamId = mattermostClientHelper.getTeamId()
         _botUserId = mattermostClientHelper.getUserId()
@@ -53,6 +55,8 @@ class MattermostService(
         val r = _client.createPost(post).readEntity()
 
         println("ready, my id is $_botUserId........................................")
+
+        // TODO quartz : job can lookup
 
         doPoll()
     }
@@ -89,14 +93,7 @@ class MattermostService(
 //        val plist = client.getPostThread(pid, null).readEntity()
 //        logger.info("" + plist)
 
-        // TODO loop schedule this poller
-
-        // client.getChannelsForTeamForUser(tid, "")
-
-        // TODO : get requests from the thread,
-        //  identify each user & demand
         // perform then reply in direct channel
-
         // OR : get my dms and mentions, then reply in dm
         // remember direct channel is between 2 users (id the couples, id the channels)
         // https://api.mattermost.com/#tag/channels/operation/CreateDirectChannel
@@ -121,13 +118,15 @@ class MattermostService(
             if (chann.type == ChannelType.Direct) {
                 logger.info("found direct channel $chann")
 //                    val dchan = client.getChannel(chann.id).readEntity()
-                val dmUsers = _client.getUsersInChannel(chann.id).readEntity() // must be 2
+                val channelId = chann.id
+                val dmUsers = _client.getUsersInChannel(channelId).readEntity() // must be 2
                 dmUsers.forEach { user ->
                     run {
                         if (user.id != _botUserId) {
-                            logger.info("possible partner: $user, ${user.username}")
-                            if(chatPartners[user.username] == null) {
-                                val post = Post(chann.id, "hello ${user.username} (dm), please reply to this thread to chat with me")
+                            val userName = user.username
+                            logger.info("possible partner: $user, $userName")
+                            if(chatPartners[userName] == null) {
+                                val post = Post(channelId, "hello $userName (dm), please reply to this message to chat with me")
                                 lastExchange = _client.createPost(post).readEntity()
                                 logger.info("set first lastExchange to $lastExchange") // the "hello"
                                 chatPartners.putIfAbsent(user.username, user.id)
@@ -137,7 +136,7 @@ class MattermostService(
                 }
                 // after hello
                 logger.info("polling for new posts after lastExchange ${lastExchange!!.id}...............")
-                val dposts = _client.getPostsAfter(chann.id, lastExchange!!.id).readEntity()
+                val dposts = _client.getPostsAfter(channelId, lastExchange!!.id).readEntity()
                 // GET /api/v4/channels/cxwfr9m4s7byumbpk4k57atugo/posts?after=bsa16fkdubymby7rb7mnu9bfor&page=0&per_page=60
                 // todo getPostThread ? since ? getFlaggedPostsForUser ?
                 val order = dposts.order
@@ -145,8 +144,8 @@ class MattermostService(
                     return@loopingchannels
                 }
                 logger.info("found ${order.size} post(s) after lastExchange ${lastExchange!!.id} : $order")
-                dposts.posts.forEach loopingposts@{ (postId, dpost) ->
-                    val poster = dpost.userId
+                dposts.posts.forEach loopingposts@{ (postId, post) ->
+                    val poster = post.userId
                     // TODO à cause de update_at, le hello de départ revient > getPostsAfter ?
                     // /!\ le prev_post_id est le hello et le root/parent
                     // /!\ "order" a BIEN les réponses de thread et PAS l'id racine en order
@@ -154,34 +153,39 @@ class MattermostService(
                         poster == _botUserId -> {
                             // this is the conversation "hello" starter
                             // this is returned because update_at is updated (?)
-                            logger.warning("\uD83E\uDD16 ignoring lastExchange from bot........")
+                            logger.warning("\uD83E\uDD16 ignoring lastExchange from bot........ for $post")
                             return@loopingposts
                         }
-                        dpost.rootId == "" && dpost.parentId == "" -> {
+                        (post.rootId == "") && (post.parentId == "") -> {
                             // this is not a conversation. TODO handle ?
                             // ours has replyCount, handle ?
-                            logger.warning("\uD83E\uDD16 lastExchange not a thread ! $dpost")
+                            logger.warning("\uD83E\uDD16 lastExchange not a thread ! $post")
                             return@loopingposts
                         }
-                        dpost.rootId != "" && dpost.parentId != "" -> {
+                        (post.rootId != "") && (post.parentId != "") -> {
                             // this is a conversation
                             // filter out us (bot)
                             if(poster != _botUserId) {
-                                logger.info("dpost after lastExchange ${lastExchange!!.id}: $postId // $dpost")
+                                logger.info("post after lastExchange ${lastExchange!!.id}: $postId // $post")
                                 // only pick the latest 1:1 conversation part
-                                //
                                 val newestPost = order[0]
-                                if(dpost.id == newestPost) {
-                                    val conversation = Conversation(dpost.userId, dpost.id,
-                                        dpost.rootId, Date.from(Instant.ofEpochMilli(dpost.createAt)), dpost.message, Actor.USER)
-                                    dbService.saveConversation(conversation)
-                                    lastExchange = dpost
+                                if(postId == newestPost) {
+                                    val request = Conversation(post.userId, postId, lastExchange!!.id,
+                                        post.rootId, Date.from(Instant.ofEpochMilli(post.createAt)), post.message, Actor.USER)
+                                    dbService.saveConversation(request)
+                                    // respond
+                                    val reply = _client.createPost(Post(channelId, "bonk")).readEntity()
+                                    val response = Conversation(reply.userId, reply.id, postId,
+                                        reply.rootId, Date.from(Instant.ofEpochMilli(reply.createAt)), reply.message, Actor.ASSISTANT)
+                                    dbService.saveConversation(response)
+                                    // cursor
+                                    lastExchange = post
                                     logger.info("refresh lastExchange to $lastExchange")
                                 }
                             }
                         }
                     }
-                    logger.info(dpost.message)
+                    logger.info(post.message)
                     // val m = openAIService.getModels().toString()
                     // _client.createPost(Post(chann.id, m)).readEntity()
 

@@ -15,23 +15,26 @@ class Conversation (
     // https://spring.io/guides/tutorials/spring-boot-kotlin/
 
     @Column(nullable = false)
-    val userID : String,
+    val userID: String, // TODO sha1 salt this
 
     @Column(nullable = false)
-    val postId : String,
+    val postId: String,
 
-    @Column(nullable = false)
-    val rootId : String,
+    @Column(nullable = true)
+    val repliedTo: String?,
+
+    @Column(nullable = true)
+    val rootId: String?,
 
     @Column(nullable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    val createdAt : Date,
+    val createdAt: Date,
 
     @Column(nullable = false)
-    val message : String,
+    val message: String,
 
     @Column(nullable = false)
-    val actor : Actor,
+    val actor: Actor,
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

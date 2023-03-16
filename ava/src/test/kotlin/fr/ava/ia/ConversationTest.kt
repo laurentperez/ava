@@ -20,7 +20,7 @@ class ConversationTest {
     fun should_mock_conversations() {
         Assertions.assertEquals(0, conversationRepository!!.count())
 
-        val c = Conversation("id1", "postid1","root1", Date.from(Instant.now()), "msg", Actor.USER)
+        val c = Conversation("id1", "postid1",null,"root1", Date.from(Instant.now()), "msg", Actor.USER)
 //        Mockito.`when`(conversationRepository!!.findById(123L)).thenReturn(c)
 //        Assertions.assertSame(c, conversationRepository!!.findById(123L));
 
