@@ -2,7 +2,7 @@ package fr.ava.ia.service.messaging
 
 import fr.ava.ia.model.Actor
 import fr.ava.ia.model.Conversation
-import fr.ava.ia.service.ai.OpenAIService
+import fr.ava.ia.service.oai.OpenAIService
 import fr.ava.ia.service.db.DbService
 import io.quarkus.runtime.StartupEvent
 import io.quarkus.scheduler.Scheduler
@@ -58,7 +58,7 @@ class MattermostService(
 
         // TODO quartz : job can lookup
 
-        doPoll()
+//        doPoll()
     }
 
     fun init() {

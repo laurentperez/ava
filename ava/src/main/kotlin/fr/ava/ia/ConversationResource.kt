@@ -9,7 +9,7 @@ import jakarta.ws.rs.Path
 import java.time.Instant
 import java.util.*
 
-@Path("/oai/chat")
+@Path("/oai/jdbc")
 class ConversationResource {
 
     @Inject

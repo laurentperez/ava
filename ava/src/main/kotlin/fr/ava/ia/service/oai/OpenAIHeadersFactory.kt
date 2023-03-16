@@ -1,4 +1,4 @@
-package fr.ava.ia.service.ai
+package fr.ava.ia.service.oai
 
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.eclipse.microprofile.rest.client.ext.ClientHeadersFactory
@@ -11,8 +11,8 @@ import jakarta.ws.rs.core.MultivaluedMap
 class OpenAIHeadersFactory : ClientHeadersFactory {
 
     @Inject
-    @ConfigProperty(name = "client.openai.secret-key")
-    lateinit var secretKey: String
+    @ConfigProperty(name = "client.oai.secret-key")
+    private lateinit var secretKey: String
 
     override fun update(
         incomingHeaders: MultivaluedMap<String, String>,
