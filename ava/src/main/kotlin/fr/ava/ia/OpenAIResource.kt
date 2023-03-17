@@ -1,8 +1,8 @@
 package fr.ava.ia
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import fr.ava.ia.service.oai.OpenAIHelper.Companion.ASSISTANT_PYTHON_COMPLETION
-import fr.ava.ia.service.oai.OpenAIHelper.Companion.ASSISTANT_PYTHON_CONSISE
+import fr.ava.ia.service.oai.OpenAIAssistants.Companion.ASSISTANT_PYTHON_COMPLETION
+import fr.ava.ia.service.oai.OpenAIAssistants.Companion.ASSISTANT_PYTHON_CONSISE
+import fr.ava.ia.service.oai.OpenAIAssistants.Companion.ASSISTANT_PYTHON_USING
 import fr.ava.ia.service.oai.OpenAIService
 import jakarta.inject.Inject
 import jakarta.ws.rs.GET
@@ -35,7 +35,7 @@ class OpenAIResource {
         val r = OpenAIService.ChatRequest(
             messages = listOf(
                 OpenAIService.ChatMessage("system", ASSISTANT_PYTHON_CONSISE),
-                OpenAIService.ChatMessage("user", "using python, write hello world. then uppercase it.")
+                OpenAIService.ChatMessage("user", ASSISTANT_PYTHON_USING + "write hello world. then uppercase it.")
             )
         )
         return openAIService.getChatCompletions(r)
