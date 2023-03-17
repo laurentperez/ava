@@ -4,7 +4,6 @@ plugins {
     id("io.quarkus")
     id("org.jetbrains.kotlin.plugin.jpa") version "1.7.21"
     id("org.jetbrains.kotlin.plugin.noarg") version "1.7.21"
-
 }
 
 repositories {
@@ -28,10 +27,10 @@ dependencies {
     implementation("io.quarkus:quarkus-rest-client")
     implementation("io.quarkus:quarkus-resteasy-jackson")
     implementation("io.quarkus:quarkus-kotlin")
+    implementation("io.quarkus:quarkus-smallrye-openapi")
+    implementation("io.quarkus:quarkus-quartz")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-
-    // implementation("io.quarkus:quarkus-arc")
 
 //    implementation("net.bis5.mattermost4j:mattermost4j-core:0.25.0")
     implementation("net.bis5.mattermost4j:mattermost4j-core:1.0.0-beta.1")
@@ -66,7 +65,6 @@ allOpen {
     annotation("jakarta.ws.rs.Path")
     annotation("jakarta.enterprise.context.ApplicationScoped")
     annotation("io.quarkus.test.junit.QuarkusTest")
-
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.Embeddable")
     annotation("jakarta.persistence.MappedSuperclass")
