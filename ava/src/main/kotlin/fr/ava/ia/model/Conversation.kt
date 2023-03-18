@@ -30,7 +30,7 @@ class Conversation (
     @Temporal(TemporalType.TIMESTAMP)
     val createdAt: Date,
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     val message: String,
 
     @Column(nullable = false)
