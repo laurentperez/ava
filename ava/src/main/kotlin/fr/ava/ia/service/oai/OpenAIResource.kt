@@ -1,9 +1,8 @@
-package fr.ava.ia
+package fr.ava.ia.service.oai
 
 import fr.ava.ia.service.oai.OpenAIAssistants.Companion.ASSISTANT_PYTHON_COMPLETION
 import fr.ava.ia.service.oai.OpenAIAssistants.Companion.ASSISTANT_PYTHON_CONSISE
 import fr.ava.ia.service.oai.OpenAIAssistants.Companion.ASSISTANT_PYTHON_USING
-import fr.ava.ia.service.oai.OpenAIService
 import jakarta.inject.Inject
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.Path
@@ -21,7 +20,7 @@ class OpenAIResource {
 
     @Inject
     @RestClient
-    lateinit var openAIService: OpenAIService
+    private lateinit var openAIService: OpenAIService
 
     @GET
     @SecurityRequirement(name = "apiKey")
