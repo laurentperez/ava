@@ -1,4 +1,6 @@
 package fr.ava.ia.service.exception
 
-class OpenAIException(message: String?, cause: Throwable?) : Exception(message, cause) {
-}
+import jakarta.ws.rs.WebApplicationException
+import jakarta.ws.rs.core.Response
+
+class OpenAIException(message: String?, response: Response) : WebApplicationException(message, response)

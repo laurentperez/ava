@@ -4,6 +4,7 @@ import fr.ava.ia.model.Actor
 import fr.ava.ia.model.Conversation
 import fr.ava.ia.model.LastExchange
 import fr.ava.ia.service.db.DbService
+import fr.ava.ia.service.exception.OpenAIException
 import fr.ava.ia.service.oai.OpenAIAssistants.Companion.ASSISTANT_PYTHON_CONSISE
 import fr.ava.ia.service.oai.OpenAIAssistants.Companion.ASSISTANT_PYTHON_USING
 import fr.ava.ia.service.oai.OpenAIService
@@ -15,6 +16,7 @@ import jakarta.inject.Inject
 import net.bis5.mattermost.client4.MattermostClient
 import net.bis5.mattermost.model.ChannelType
 import net.bis5.mattermost.model.Post
+import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.eclipse.microprofile.rest.client.inject.RestClient
 import org.jboss.logging.Logger
 import org.quartz.Job
@@ -39,7 +41,9 @@ class MattermostService(
     private val mmClient: MattermostClient,
     private val quartz : Scheduler,
     @RestClient
-    private var openAIService: OpenAIService
+    private var openAIService: OpenAIService,
+    @ConfigProperty(name = "bot.mmost.pollingInterval")
+    private val pollingInterval : Int,
 ) {
 
     private var logger = Logger.getLogger(this::class.java.name)
@@ -57,17 +61,16 @@ class MattermostService(
         val home = mmClient.getChannelByName(mattermostClientHelper.getHome(), _teamId).readEntity()
         val post = Post()
         post.channelId = home.id
-        val now = humanDate(System.currentTimeMillis())
-        post.message = "Hello ${home.name}, I'm a bot. Started at: $now"
+        post.message = "Hello ${home.name}, I'm a bot. Started at: ${humanDate(System.currentTimeMillis())}"
 //        post.isPinned = true
         val r = mmClient.createPost(post).readEntity()
 
-        println("ready, my id is $_botUserId........................................")
+        logger.info("ready, my id is $_botUserId........................................")
 
         val ctx = hashMapOf<String, Any>()
         ctx["teamId"] = _teamId
         ctx["botUserId"] = _botUserId
-        ctx["chatPartners"] = hashMapOf<String, String>()
+        ctx["chatPartners"] = hashMapOf<String, String>() // TODO handle roles/quotas
         val job = JobBuilder.newJob(PostPollerJob::class.java)
             .withIdentity("poller", "chat")
             .usingJobData(JobDataMap(ctx))
@@ -77,7 +80,7 @@ class MattermostService(
             .startNow()
             .withSchedule(
                 SimpleScheduleBuilder.simpleSchedule()
-                    .withIntervalInSeconds(8)
+                    .withIntervalInSeconds(pollingInterval)
                     .repeatForever()
             )
             .build()
@@ -119,9 +122,12 @@ class MattermostService(
                                     val userName = user.username
                                     logger.info("\uD83D\uDC91 possible partner: $userName, ${user.id}, ${user.isBot}")
                                     if(chatPartners[userName] == null) {
-                                        val hello = mmclient.createPost(Post(channelId, "hello $userName (dm), please reply to this message to chat with me")).readEntity() // FIXME try catch ?
+                                        // hello starter
+                                        // FIXME try catch http ?
+                                        val p = Post(channelId, "hello $userName (dm), please reply to this message to chat with me")
+                                        val hello = mmclient.createPost(p).readEntity()
                                         dbService.saveLastExchange(LastExchange(user.id, userName, hello.id))
-                                        logger.info("\uD83D\uDC91 set first lastExchange to ${hello.id}") // the "hello"
+                                        logger.info("\uD83D\uDC91 set first lastExchange (hello) to ${hello.id}")
                                         chatPartners.putIfAbsent(user.username, user.id)
                                     }
                                 }
@@ -203,7 +209,11 @@ class MattermostService(
                                     val cResp = openAIService.getChatCompletions(cRequest).choices[0]
                                     val message = cResp.message.content
                                     client.createPost(Post(channelId, message)).readEntity()
-                                } catch (e: Exception) {
+                                } catch (oe: OpenAIException) {
+                                    logger.error("\uD83D\uDCA5 oops, error!", oe)
+                                    client.createPost(Post(channelId, "\uD83D\uDCA5 oops, error! ${oe.message}")).readEntity()
+                                }
+                                catch (e: Exception) {
                                     logger.error("\uD83D\uDCA5 oops, error!", e)
                                     client.createPost(Post(channelId, "\uD83D\uDCA5 oops, error! ${e.message}")).readEntity()
                                 }

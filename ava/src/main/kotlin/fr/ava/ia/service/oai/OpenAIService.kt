@@ -1,17 +1,20 @@
 package fr.ava.ia.service.oai
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import fr.ava.ia.service.exception.OpenAIExceptionMapper
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.POST
 import jakarta.ws.rs.Path
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider
 import java.time.Instant
 
 @RegisterRestClient(configKey = "oai-api")
 // @ClientHeaderParam(name = "x-testing", value = "java")
 // @ClientHeaderParam(name = "Authorization", value = ["{xxxxxxx.ia.client.OpenAI.getAuthorizationHeader}"])
 @RegisterClientHeaders(OpenAIHeadersFactory::class)
+@RegisterProvider(OpenAIExceptionMapper::class, priority = 50)
 interface OpenAIService {
 
     @GET
