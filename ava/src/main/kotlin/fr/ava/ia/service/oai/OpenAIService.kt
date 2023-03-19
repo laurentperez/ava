@@ -31,13 +31,13 @@ interface OpenAIService {
     fun getCompletions(request : CompletionRequest) : CompletionResponse
 
     data class Model(
-        val id: String,
+        @JsonProperty("id")val id: String,
         @JsonProperty("object")val obj: String,
-        val owned_by: String
+        @JsonProperty("owned_by")val owned_by: String
     )
     data class Models(
         @JsonProperty("object")val obj: String,
-        val data: List<Model>
+        @JsonProperty("data")val data: List<Model>
     )
 
     // ref : https://platform.openai.com/docs/api-reference/chat/create
@@ -50,9 +50,6 @@ interface OpenAIService {
         val user: String = ChatRequest::class.java.simpleName + model + "jdk"
         // echo to echo back the prompt
     )
-
-
-
 
     data class ChatMessage(
         val role : String, // system, user, assistant

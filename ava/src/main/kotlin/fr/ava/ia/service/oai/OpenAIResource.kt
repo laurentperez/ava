@@ -52,7 +52,4 @@ class OpenAIResource {
         return openAIService.getCompletions(r)
     }
 
-    data class Payload(
-        val prompt: String
-    )
 }
