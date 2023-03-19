@@ -10,6 +10,7 @@ import org.eclipse.microprofile.openapi.annotations.enums.SecuritySchemeType
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 import org.eclipse.microprofile.openapi.annotations.security.SecurityScheme
 import org.eclipse.microprofile.openapi.annotations.security.SecuritySchemes
+import org.eclipse.microprofile.openapi.annotations.tags.Tag
 import org.eclipse.microprofile.rest.client.inject.RestClient
 
 @Path("/oai")
@@ -22,6 +23,7 @@ class OpenAIResource {
     @RestClient
     private lateinit var openAIService: OpenAIService
 
+    @Tag(name = "OpenAI models", description = "Returns available models")
     @GET
     @SecurityRequirement(name = "apiKey")
     fun models(): OpenAIService.Models {
