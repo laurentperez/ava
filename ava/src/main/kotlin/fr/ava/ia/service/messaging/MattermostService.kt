@@ -36,40 +36,37 @@ import kotlin.collections.HashMap
 @ApplicationScoped
 @Priority(1)
 class MattermostService(
-    private val dbService: DbService,
     private val mattermostClientHelper: MattermostClientHelper,
     private val mmClient: MattermostClient,
     private val quartz : Scheduler,
-    @RestClient
-    private var openAIService: OpenAIService,
     @ConfigProperty(name = "bot.mmost.pollingInterval")
     private val pollingInterval : Int,
 ) {
 
     private var logger = Logger.getLogger(this::class.java.name)
 
-    private lateinit var _teamId : String
-    private lateinit var _botUserId : String
+    private lateinit var teamId : String
+    private lateinit var botUserId : String
 
     fun onStart(@Observes ev: StartupEvent?) {
         // CDI ARC reference https://marcelkliemannel.com/articles/2021/migrating-from-spring-to-quarkus/#the-container
 
-        _teamId = mattermostClientHelper.getTeamId()
-        _botUserId = mattermostClientHelper.getUserId()
+        teamId = mattermostClientHelper.getTeamId()
+        botUserId = mattermostClientHelper.getUserId()
 
         // introduce ourselves: post to home
-        val home = mmClient.getChannelByName(mattermostClientHelper.getHome(), _teamId).readEntity()
+        val home = mmClient.getChannelByName(mattermostClientHelper.getHome(), teamId).readEntity()
         val post = Post()
         post.channelId = home.id
         post.message = "Hello ${home.name}, I'm a bot. Started at: ${humanDate(System.currentTimeMillis())}"
 //        post.isPinned = true
         val r = mmClient.createPost(post).readEntity()
 
-        logger.info("ready, my id is $_botUserId........................................")
+        logger.info("ready, my id is $botUserId........................................")
 
         val ctx = hashMapOf<String, Any>()
-        ctx["teamId"] = _teamId
-        ctx["botUserId"] = _botUserId
+        ctx["teamId"] = teamId
+        ctx["botUserId"] = botUserId
         ctx["chatPartners"] = hashMapOf<String, String>() // TODO handle roles/quotas
         val job = JobBuilder.newJob(PostPollerJob::class.java)
             .withIdentity("poller", "chat")
@@ -179,7 +176,7 @@ class MattermostService(
                         return@loopingposts
                     }
                     (post.rootId != "") && (post.parentId != "") -> {
-                        // this is a conversation
+                        // this is a user conversation
                         // filter out us (bot)
                         if(poster != botUserId) {
                             logger.info("found post after lastExchange ${lastExchange.id}: $postId // $post")
@@ -188,7 +185,7 @@ class MattermostService(
                             if(postId == newestPost) {
                                 logger.info("post lastExchange postId == newestPost ! $newestPost")
                                 // immediately set cursor delta:
-                                // http may be slow to respond. we don't want next poll to step and replay from previous cursor.
+                                // http may be slow to respond. we don't want next poll to step into, and replay from previous cursor.
                                 lastExchange = LastExchange(post.userId, "?", post.id)
                                 dbService.saveLastExchange(lastExchange)
                                 logger.info("♻️ refresh lastExchange to $lastExchange")

@@ -23,10 +23,6 @@ class MattermostClientHelper(
 
     }
 
-    fun getClient() : MattermostClient {
-        return mmClient
-    }
-
     fun getHome() : String {
         return home
     }

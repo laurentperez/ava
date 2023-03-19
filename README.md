@@ -3,29 +3,38 @@
 Ava is a general purpose bot/API interacting with NLP/LLM models.    
 Ava is named after https://en.wikipedia.org/wiki/Ex_Machina_(film) and the _J_ ava Virtual Machine.
 
-# What models or APIs does it support ?
-
-Please note OpenAI's models are not the sole actors in LLMs ;)
-
-Other models are : BLOOM, FB LLaMA, SF CodeGen, OPT-175B, BERT, PaLM, AlexaTM, Tabnine, Kite
-
-However, OpenAI used human instruction training with InstructGPT (https://openai.com/research/instruction-following) so it's easier to prompt them than other models.  
-In other words: *some public models are not instructed for straight question answering*: you need to prompt them using few-shot examples, user intentions, and think of the answer as a natural continuation of your prompt.      
-See prompting tips at https://github.com/facebookresearch/llama/blob/main/FAQ.md#2-generations-are-bad
-
-### Currently, supported models are :
-
-- cloud/API based: ChatGPT-3+ (thru OpenAI APIs, an API key is required)
-- local usage: BLOOM (thanks to Nouarame Tazi's work https://github.com/NouamaneTazi/bloomz.cpp)
-
-*note: since FB LLaMA is a leaked model, the cat is out of the bag but no instructions will be provided on how to get the required files.*
-
 # Overview
 
 Ava has two components
 
 - a bot: better suited for a chat flow, its default setup is to join your Mattermost server https://mattermost.com/ and wait for a user to chat with.
 - a REST API: better suited for completions or general purpose interactions.
+# Screenshots
+
+Bot usage (see below) : chat with the bot using a reply thread
+
+![bot](ava.png)
+
+API usage (see below) : prompt
+
+![capitalism](capitalism.png)
+
+# What models or APIs does it support ?
+
+OpenAI's models are not the sole actors in LLMs ;)
+
+Other models are : BLOOM, Meta's LLaMA/OPT-175B, SF's CodeGen, Google's PaLM/BERT, Amazon AlexaTM
+
+However, OpenAI used [human instruction training with InstructGPT](https://platform.openai.com/docs/model-index-for-researchers/instructgpt-models) so it's easier to prompt it than other models.  
+In other words: *some models are foundation models and were not instructed for straight question answering, may produce toxic content*: you need to prompt them using few-shot examples, user intentions, and think of the answer as a natural continuation of your prompt.      
+See prompting tips at https://github.com/facebookresearch/llama/blob/main/FAQ.md#2-generations-are-bad
+
+### Currently supported models are :
+
+- cloud/API based: ChatGPT-3+ (thru OpenAI APIs, an API key is required)
+- local usage: BLOOM (thanks to Nouarame Tazi's work https://github.com/NouamaneTazi/bloomz.cpp)
+
+*note: since Meta's LLaMA is a leaked model, the cat is out of the bag but no instructions will be provided on how to get the required files.*
 
 ### Shall I use self-hosted models or cloud based models ?
 
@@ -54,8 +63,8 @@ Keep in mind *it should not be used for High-Stakes Decision-Making*, see below
 
 # Quickstart
 
-If you want to use local models downloaded from Huggingface : make sure you have enough RAM and disk space !  
-For example the pytorch model of `bigscience/bloomz-7b1` weights at 14GB and ggml conversion requires around 10GB of RAM.
+If you want to use local models downloaded from Huggingface or other places : make sure you have enough RAM and disk space !  
+For example the pytorch model of `bigscience/bloomz-7b1` weights at 14GB and requires around 10GB of RAM for its q4 quantization.
 
 1. install a JDK17 from https://sdkman.io/
 2. start the on-premise Mattermost chat server `docker compose up`
@@ -80,8 +89,6 @@ curl -v -XPOST -H 'Content-Type: application/json' -d '{"msg":"translate \"Hi, h
 sampling parameters: temp = 0.800000, top_k = 40, top_p = 0.950000, repeat_last_n = 64, repeat_penalty = 1.300000  
 translate "Hi, how are you?" in Spanish: Me encuentro muy bien. ¿Cómo estas tú? Yo estoy?: me alegro</s> [end of text]
 ```
-
-
 
 # Frameworks & tools used
 
