@@ -18,7 +18,7 @@ class OpenAIHeadersFactory : ClientHeadersFactory {
         incomingHeaders: MultivaluedMap<String, String>,
         clientOutgoingHeaders: MultivaluedMap<String, String>
     ): MultivaluedMap<String, String> {
-        val result: MultivaluedMap<String, String> = MultivaluedHashMap()
+        val result = MultivaluedHashMap<String, String>()
         result.add("Authorization", secretKey)
         return result
     }

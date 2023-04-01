@@ -39,6 +39,8 @@ class MattermostService(
     private val mattermostClientHelper: MattermostClientHelper,
     private val mmClient: MattermostClient,
     private val quartz : Scheduler,
+    @ConfigProperty(name = "bot.mmost.enabled")
+    private val enabled : Boolean,
     @ConfigProperty(name = "bot.mmost.pollingInterval")
     private val pollingInterval : Int,
 ) {
@@ -49,6 +51,7 @@ class MattermostService(
     private lateinit var botUserId : String
 
     fun onStart(@Observes ev: StartupEvent?) {
+        if(!enabled) return
         // CDI ARC reference https://marcelkliemannel.com/articles/2021/migrating-from-spring-to-quarkus/#the-container
 
         teamId = mattermostClientHelper.getTeamId()
