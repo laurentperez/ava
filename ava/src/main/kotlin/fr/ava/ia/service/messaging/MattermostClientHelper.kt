@@ -19,9 +19,9 @@ class MattermostClientHelper(
     private val mmClient : MattermostClient
 ) {
 
-    fun onStart(@Observes ev: StartupEvent?) {
-
-    }
+//    fun onStart(@Observes ev: StartupEvent?) {
+//
+//    }
 
     fun getHome() : String {
         return home

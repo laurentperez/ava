@@ -7,6 +7,8 @@ import org.eclipse.microprofile.config.inject.ConfigProperty
 
 @ApplicationScoped
 class MattermostClientProducer(
+    @ConfigProperty(name = "bot.mmost.enabled")
+    private val enabled : Boolean,
     @ConfigProperty(name = "bot.mmost.serverUrl")
     private val serverUrl : String,
     @ConfigProperty(name = "bot.mmost.login")
@@ -21,7 +23,7 @@ class MattermostClientProducer(
             .url(serverUrl)
             .ignoreUnknownProperties()
             .build()
-        mmClient.login(login, password)
+        if(enabled) mmClient.login(login, password)
         return mmClient
     }
 }
