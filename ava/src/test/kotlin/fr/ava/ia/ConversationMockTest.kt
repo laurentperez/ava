@@ -11,21 +11,20 @@ import java.time.Instant
 import java.util.*
 
 @QuarkusTest
-class ConversationTest {
+class ConversationMockTest {
 
     @InjectMock
-    var conversationRepository: ConversationRepository? = null
+    lateinit var conversationRepository: ConversationRepository
 
     @Test
     fun should_mock_conversations() {
-        Assertions.assertEquals(0, conversationRepository!!.count())
 
         val c = Conversation("id1", "postid1",null,"root1", Date.from(Instant.now()), "msg", Actor.USER)
 //        Mockito.`when`(conversationRepository!!.findById(123L)).thenReturn(c)
 //        Assertions.assertSame(c, conversationRepository!!.findById(123L));
 
-        conversationRepository!!.persist(c)
-        Assertions.assertEquals(0, conversationRepository!!.count())
+        conversationRepository.persist(c)
+        Assertions.assertEquals(0, conversationRepository.count())
     }
 
 

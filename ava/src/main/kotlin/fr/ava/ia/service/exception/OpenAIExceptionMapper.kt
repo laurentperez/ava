@@ -12,10 +12,9 @@ class OpenAIExceptionMapper : ResponseExceptionMapper<Exception> {
     override fun toThrowable(response: Response?): Exception {
         val status = response!!.status
         val body = getBody(response)
-        val re: RuntimeException
-        when (status) {
-            401 -> re = OpenAIException(body, response)
-            else -> re = WebApplicationException("oops", response)
+        val re: RuntimeException = when (status) {
+            401 -> OpenAIException(body, response)
+            else -> WebApplicationException("oops", response)
         }
         return re
     }

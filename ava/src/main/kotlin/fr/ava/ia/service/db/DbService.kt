@@ -28,6 +28,17 @@ class DbService {
     }
 
     @Transactional
+    fun findConversationWithUser(userID : String) : List<Conversation> {
+        // return conversationRepository.list("from Conversation where userID=?1", userID)
+        return conversationRepository.find("#Conversation.getByUserID", userID).list()
+
+    }
+    @Transactional
+    fun findAllConversations() : List<Conversation> {
+        return conversationRepository.findAll().list()
+    }
+
+    @Transactional
     fun saveLastExchange(lastExchange: LastExchange) {
         logger.info("\uD83D\uDCDD saving $lastExchange")
         lastExchangeRepository.persistAndFlush(lastExchange)

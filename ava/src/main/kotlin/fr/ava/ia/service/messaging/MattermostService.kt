@@ -70,7 +70,7 @@ class MattermostService(
         val ctx = hashMapOf<String, Any>()
         ctx["teamId"] = teamId
         ctx["botUserId"] = botUserId
-        ctx["chatPartners"] = hashMapOf<String, String>() // TODO handle roles/quotas
+        ctx["chatPartners"] = hashMapOf<String, String>() // TODO persist and handle roles/quotas
         val job = JobBuilder.newJob(PostPollerJob::class.java)
             .withIdentity("poller", "chat")
             .usingJobData(JobDataMap(ctx))
@@ -123,8 +123,8 @@ class MattermostService(
                                     logger.info("\uD83D\uDC91 possible partner: $userName, ${user.id}, ${user.isBot}")
                                     if(chatPartners[userName] == null) {
                                         // hello starter
-                                        // FIXME try catch http ?
-                                        val p = Post(channelId, "hello $userName (dm), please reply to this message to chat with me")
+                                        // FIXME try catch @Retry http ?
+                                        val p = Post(channelId, "hello $userName, please reply to this message using a Direct Message to chat with me")
                                         val hello = mmclient.createPost(p).readEntity()
                                         dbService.saveLastExchange(LastExchange(user.id, userName, hello.id))
                                         logger.info("\uD83D\uDC91 set first lastExchange (hello) to ${hello.id}")
@@ -175,7 +175,7 @@ class MattermostService(
                     (post.rootId == "") && (post.parentId == "") -> {
                         // this is not a conversation but a message in direct channel.
                         // TODO handle control commands like !command
-                        logger.warn("\uD83D\uDDE3️ ignoring lastExchange from ${post.userId} is not a thread ! $post")
+                        logger.warn("\uD83D\uDDE3️ ignoring lastExchange from $poster is not a thread ! $post")
                         return@loopingposts
                     }
                     (post.rootId != "") && (post.parentId != "") -> {
@@ -189,14 +189,17 @@ class MattermostService(
                                 logger.info("post lastExchange postId == newestPost ! $newestPost")
                                 // immediately set cursor delta:
                                 // http may be slow to respond. we don't want next poll to step into, and replay from previous cursor.
-                                lastExchange = LastExchange(post.userId, "?", post.id)
+                                lastExchange = LastExchange(poster, "?", post.id)
                                 dbService.saveLastExchange(lastExchange)
                                 logger.info("♻️ refresh lastExchange to $lastExchange")
                                 // now kith
-                                val request = Conversation(post.userId, postId, repliedTo = lastExchange.postID,
+                                val request = Conversation(poster, postId, repliedTo = lastExchange.postID,
                                     post.rootId, Date.from(Instant.ofEpochMilli(post.createAt)), post.message, Actor.USER)
                                 dbService.saveConversation(request)
+                                val cu = dbService.findConversationWithUser(poster)
                                 val cRequest = OpenAIService.ChatRequest(
+                                    // TODO aggregate
+                                    // TODO bind root!id of ASSISTANT response, active
                                     messages = listOf(
                                         OpenAIService.ChatMessage("system", ASSISTANT_PYTHON_CONSISE),
                                         OpenAIService.ChatMessage("user", ASSISTANT_PYTHON_USING

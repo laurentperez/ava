@@ -15,7 +15,7 @@ import java.time.Instant
 // @ClientHeaderParam(name = "Authorization", value = ["{xxxxxxx.ia.client.OpenAI.getAuthorizationHeader}"])
 @RegisterClientHeaders(OpenAIHeadersFactory::class)
 @RegisterProvider(OpenAIExceptionMapper::class, priority = 50)
-interface OpenAIService {
+interface OpenAIService { // TODO @Retry
 
     @GET
     @Path("/models")

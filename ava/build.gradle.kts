@@ -9,12 +9,12 @@ plugins {
 repositories {
     mavenCentral()
     mavenLocal()
-    maven {
-        url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-	mavenContent {
-            snapshotsOnly()
-        }
-    }
+//    maven {
+//        url = uri("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+//	mavenContent {
+//            snapshotsOnly()
+//        }
+//    }
 }
 
 val quarkusPlatformGroupId: String by project
@@ -43,6 +43,7 @@ dependencies {
     // implementation("org.glassfish.jersey.connectors:jersey-apache-connector:3.0.4")
 
     implementation("io.quarkus:quarkus-hibernate-orm-panache")
+    annotationProcessor("io.quarkus:quarkus-panache-common")
     implementation("io.quarkus:quarkus-jdbc-postgresql")
 
     testImplementation("io.quarkus:quarkus-junit5")

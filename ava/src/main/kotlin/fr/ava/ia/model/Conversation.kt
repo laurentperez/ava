@@ -5,17 +5,19 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.NamedQuery
 import jakarta.persistence.Temporal
 import jakarta.persistence.TemporalType
 import java.util.*
 
 @Entity
+@NamedQuery(name = "Conversation.getByUserID", query = "from Conversation where userID = ?1 and isActive = true")
 class Conversation (
 
     // https://spring.io/guides/tutorials/spring-boot-kotlin/
 
     @Column(nullable = false)
-    val userID: String, // TODO sha1 salt this
+    val userID: String, // TODO crypt this
 
     @Column(nullable = false)
     val postId: String,
