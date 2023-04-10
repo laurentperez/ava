@@ -1,9 +1,11 @@
 plugins {
-    kotlin("jvm") version "1.7.21"
-    kotlin("plugin.allopen") version "1.7.21"
+    kotlin("jvm") version "1.8.20"
+    kotlin("plugin.allopen") version "1.8.20"
     id("io.quarkus")
-    id("org.jetbrains.kotlin.plugin.jpa") version "1.7.21"
-    id("org.jetbrains.kotlin.plugin.noarg") version "1.7.21"
+    id("org.jetbrains.kotlin.plugin.jpa") version "1.8.20"
+    id("org.jetbrains.kotlin.plugin.noarg") version "1.8.20"
+//    kotlin("plugin.lombok") version "1.8.20"
+//    id("io.freefair.lombok") version "5.3.0"
 }
 
 repositories {
