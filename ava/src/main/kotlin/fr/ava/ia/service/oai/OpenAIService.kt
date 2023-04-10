@@ -43,7 +43,7 @@ interface OpenAIService { // TODO @Retry
     // ref : https://platform.openai.com/docs/api-reference/chat/create
     data class ChatRequest(
         val model : String = "gpt-3.5-turbo",
-        val messages : List<ChatMessage>,
+        val messages : List<ChatMessage> = emptyList(),
         val temperature : Double = 1.0,
         val n : Int = 1,
         val max_tokens : Int = 512,
