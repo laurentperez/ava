@@ -13,8 +13,8 @@ class OpenAIExceptionMapper : ResponseExceptionMapper<Exception> {
         val status = response!!.status
         val body = getBody(response)
         val re: RuntimeException = when (status) {
-            401 -> OpenAIException(body, response)
-            else -> WebApplicationException("oops", response)
+            401, 403, 404 -> OpenAIException(body, response) // 404 = bad post body
+            else -> WebApplicationException("oops, body: $body", response)
         }
         return re
     }
