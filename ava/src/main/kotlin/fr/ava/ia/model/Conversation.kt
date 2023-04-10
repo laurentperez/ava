@@ -11,7 +11,9 @@ import jakarta.persistence.TemporalType
 import java.util.*
 
 @Entity
-@NamedQuery(name = "Conversation.getByUserID", query = "from Conversation where userID = ?1 and isActive = true")
+@NamedQuery(name = "Conversation.withUserWithRootId",
+    query = "from Conversation where userID = ?1 and rootId = ?2 and isActive = true")
+// @ToString // TODO fix lombok do own toString
 class Conversation (
 
     // https://spring.io/guides/tutorials/spring-boot-kotlin/

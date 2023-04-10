@@ -13,6 +13,7 @@ import jakarta.annotation.Priority
 import jakarta.enterprise.context.ApplicationScoped
 import jakarta.enterprise.event.Observes
 import jakarta.inject.Inject
+import jakarta.persistence.NoResultException
 import net.bis5.mattermost.client4.MattermostClient
 import net.bis5.mattermost.model.ChannelType
 import net.bis5.mattermost.model.Post
@@ -30,7 +31,6 @@ import org.quartz.TriggerBuilder
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util.*
-import kotlin.collections.HashMap
 
 
 @ApplicationScoped
@@ -70,7 +70,7 @@ class MattermostService(
         val ctx = hashMapOf<String, Any>()
         ctx["teamId"] = teamId
         ctx["botUserId"] = botUserId
-        ctx["chatPartners"] = hashMapOf<String, String>() // TODO persist and handle roles/quotas
+        // ctx["chatPartners"] = hashMapOf<String, String>() // TODO handle roles/quotas
         val job = JobBuilder.newJob(PostPollerJob::class.java)
             .withIdentity("poller", "chat")
             .usingJobData(JobDataMap(ctx))
@@ -91,20 +91,20 @@ class MattermostService(
 
     class PostPollerJob : Job {
 
+        private var logger = Logger.getLogger(this::class.java.name)
+
         @Inject
-        private lateinit var mmclient: MattermostClient
+        lateinit var mmclient: MattermostClient
         @Inject
-        private lateinit var dbService: DbService
+        lateinit var dbService: DbService
         @Inject
         @RestClient
-        private lateinit var openAIService: OpenAIService
+        lateinit var openAIService: OpenAIService
 
-        private var logger = Logger.getLogger(this::class.java.name)
 
         override fun execute(context: JobExecutionContext) {
             val teamId = context.mergedJobDataMap["teamId"] as String
             val botUserId = context.mergedJobDataMap["botUserId"] as String
-            val chatPartners = context.mergedJobDataMap["chatPartners"] as HashMap<String, String>
 
         // hint : mock taskbean
         //fun doPoll() {
@@ -115,31 +115,32 @@ class MattermostService(
                         val channelId = chann.id
                         val channelName = chann.name
                         logger.info("found direct channel $channelId $channelName, lasPostAt ${chann.lastPostat}, lastRootPost at ${chann.lastRootPostAt}")
-                        val dmUsers = mmclient.getUsersInChannel(channelId).readEntity() // must be 2
+                        val dmUsers = mmclient.getUsersInChannel(channelId).readEntity()
+                            .filter { !it.isBot && it.id != botUserId } // must be pairs. avoid ourselves + surveybot, advisor
                         dmUsers.forEach { user ->
-                            run {
-                                if (user.id != botUserId) {
-                                    val userName = user.username
-                                    logger.info("\uD83D\uDC91 possible partner: $userName, ${user.id}, ${user.isBot}")
-                                    if(chatPartners[userName] == null) {
-                                        // hello starter
-                                        // FIXME try catch @Retry http ?
-                                        val p = Post(channelId, "hello $userName, please reply to this message using a Direct Message to chat with me")
-                                        val hello = mmclient.createPost(p).readEntity()
-                                        dbService.saveLastExchange(LastExchange(user.id, userName, hello.id))
-                                        logger.info("\uD83D\uDC91 set first lastExchange (hello) to ${hello.id}")
-                                        chatPartners.putIfAbsent(user.username, user.id)
-                                    }
+                        run {
+                            val userName = user.username
+                            val userId = user.id
+                            logger.info("\uD83D\uDC91 possible partner: $userName, $userId, bot?:${user.isBot}")
+                            val u = try {
+                                    dbService.findUserById(user.id)
+                                } catch (nre: NoResultException) {
+                                    // not found before => save then hello starter
+                                    dbService.saveUser(userId, userName)
+                                    val p = Post(channelId, "hello $userName, please reply to this message using a Direct Message to chat with me")
+                                    val hello = mmclient.createPost(p).readEntity()
+                                    // FIXME try catch @Retry http ?
+                                    dbService.saveLastExchange(LastExchange(userId, userName, hello.id))
+                                    logger.info("\uD83D\uDC91 set first lastExchange (hello) with $userName to ${hello.id}")
                                 }
+                                handlePosts(mmclient, dbService, openAIService, botUserId, channelId)
                             }
-                        } // eof dmUsers welcoming exchange
-                        handlePosts(mmclient, dbService, openAIService, botUserId, channelId)
+                        } // eof dmUsers hello exchange
                     } else {
                         logger.warn("UNEXPECTED channel type ${chann.type} : ${chann.name}")
                     }
                 }
                 // partners are updated, posts updated
-//                    sleep(8_000)
                 logger.info("end of loop...........")
             //} while (true)
         //}
@@ -149,6 +150,8 @@ class MattermostService(
                                 botUserId: String,
                                 channelId: String) : LastExchange? {
             // find the last exchange
+            // TODO : dequeue this for each saved hello'ed user.
+            // spawn vertices and fork join per user ?
             var lastExchange = dbService.findLastExchange()
             logger.info("⏳ polling for new posts after lastExchange ${lastExchange.postID}...............")
             val posts = client.getPostsAfter(channelId, lastExchange.postID).readEntity()
@@ -167,7 +170,7 @@ class MattermostService(
                 // /!\ "order" a BIEN les réponses de thread et PAS l'id racine en order
                 when {
                     poster == botUserId -> {
-                        // this is: the conversational "hello" starter, or a bot reply
+                        // this is: the conversational "hello" starter, or a bot (ourselves) reply
                         // "hello" can be returned because update_at is updated (?)
                         logger.warn("\uD83E\uDD16 ignoring lastExchange from bot........ for $post")
                         return@loopingposts
@@ -189,24 +192,27 @@ class MattermostService(
                                 logger.info("post lastExchange postId == newestPost ! $newestPost")
                                 // immediately set cursor delta:
                                 // http may be slow to respond. we don't want next poll to step into, and replay from previous cursor.
-                                lastExchange = LastExchange(poster, "?", post.id)
+                                lastExchange = LastExchange(poster, "?", post.id) // TODO FIXME withusername
                                 dbService.saveLastExchange(lastExchange)
                                 logger.info("♻️ refresh lastExchange to $lastExchange")
                                 // now kith
+                                val rootID = post.rootId
                                 val request = Conversation(poster, postId, repliedTo = lastExchange.postID,
-                                    post.rootId, Date.from(Instant.ofEpochMilli(post.createAt)), post.message, Actor.USER)
+                                    rootID, Date.from(Instant.ofEpochMilli(post.createAt)), post.message, Actor.USER)
                                 dbService.saveConversation(request)
-                                val cu = dbService.findConversationWithUser(poster)
-                                val cRequest = OpenAIService.ChatRequest(
-                                    // TODO aggregate
-                                    // TODO bind root!id of ASSISTANT response, active
-                                    messages = listOf(
-                                        OpenAIService.ChatMessage("system", ASSISTANT_PYTHON_CONSISE),
-                                        OpenAIService.ChatMessage("user", ASSISTANT_PYTHON_USING
+                                val cu = dbService.findConversationWithUserWithRootId(poster, rootID)
+                                // TODO aggregate : https://platform.openai.com/docs/guides/chat/introduction
+                                // TODO bind root!id of ASSISTANT response, active
+                                val messages = listOf(
+                                    OpenAIService.ChatMessage(role = "system", content = ASSISTANT_PYTHON_CONSISE),
+                                    OpenAIService.ChatMessage(
+                                        role = "user", content = ASSISTANT_PYTHON_USING
                                                 + post.message
-                                        )
+                                    ))
+                                val cRequest = OpenAIService.ChatRequest(
+                                    // model = "gpt-4", // TODO match preferred usermodel
+                                    messages = messages
                                     )
-                                )
                                 // reply: either success or error
                                 val reply : Post = try {
                                     val cResp = openAIService.getChatCompletions(cRequest).choices[0]
@@ -217,11 +223,12 @@ class MattermostService(
                                     client.createPost(Post(channelId, "\uD83D\uDCA5 oops, error! ${oe.message}")).readEntity()
                                 }
                                 catch (e: Exception) {
-                                    logger.error("\uD83D\uDCA5 oops, error!", e)
-                                    client.createPost(Post(channelId, "\uD83D\uDCA5 oops, error! ${e.message}")).readEntity()
+                                    logger.error("\uD83D\uDCA5 oops, generic error!", e)
+                                    client.createPost(Post(channelId, "\uD83D\uDCA5 oops, generic error! ${e.message}")).readEntity()
                                 }
+                                // FIXME: why was reply.rootid="" ? because reply post is not in thread. use rootID instead
                                 val response = Conversation(reply.userId, reply.id, repliedTo = postId,
-                                    reply.rootId, Date.from(Instant.ofEpochMilli(reply.createAt)), reply.message, Actor.ASSISTANT)
+                                    rootID, Date.from(Instant.ofEpochMilli(reply.createAt)), reply.message, Actor.ASSISTANT)
                                 dbService.saveConversation(response)
                                 return lastExchange
                             }
